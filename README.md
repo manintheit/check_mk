@@ -6,4 +6,5 @@ Both are tested on check_mk version `2.0.0p31 (CFE)`
 
 ## Requirements:
 * jmespath
+* jq 1.6
 
