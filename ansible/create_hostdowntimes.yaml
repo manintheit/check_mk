@@ -1,0 +1,40 @@
+---
+- hosts: all
+  connection: local
+  vars:
+    cmk_base_api_addr: http://127.0.0.1:5000/monitoring/check_mk/api/1.0
+  vars_prompt:
+    - name: api_pass
+      prompt: provide check_mk 'automation' user credential?
+      private: yes
+    - name: downtime_in_minutes
+      prompt: provide downtime in minutes
+      private: no
+  tasks:
+    - name: get host downtimes
+      uri:
+        url: "{{ cmk_base_api_addr }}/domain-types/downtime/collections/host"
+        method: POST
+        body_format: json
+        headers:
+          Authorization: "Bearer automation {{ api_pass }}"
+          Accept: "application/json"
+          Content-Type: "application/json"
+        body:
+          comment: "managed ansible"
+          downtime_type: "host"
+          host_name: "{{ inventory_hostname }}"
+          recur: "fixed"
+          start_time: "{{ lookup('pipe', 'date --utc \"+%Y-%m-%dT%H:%M:%SZ\"') }}"
+          end_time: "{{ lookup('pipe', 'date --utc \"+%Y-%m-%dT%H:%M:%SZ\" -d \"+ {{ downtime_in_minutes }}minutes\"') }}"
+        return_content: yes
+        status_code: 204
+      ignore_errors: yes
+      register: resp
+
+    - name: failed while set host downtime
+      debug:
+        msg: "{{ resp.msg }}"
+      when: resp.failed
+
+

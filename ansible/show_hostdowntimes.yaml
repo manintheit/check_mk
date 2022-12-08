@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    cmk_base_api_addr: http://127.0.0.1:5000/monitoring/check_mk/api/1.0
+  vars_prompt:
+    - name: api_pass
+      prompt: provide check_mk 'automation' user credential?
+      private: yes
+  tasks:
+    - name: get host downtimes
+      uri:
+        url: "{{ cmk_base_api_addr }}/domain-types/downtime/collections/all"
+        method: GET
+        headers:
+          Authorization: "Bearer automation {{ api_pass }}"
+          Accept: "application/json"
+          Content-Type: "application/json"
+        return_content: yes
+        status_code: 200
+      ignore_errors: yes
+      register: resp
+
+    - name: failed when showing hostdowntimes
+      debug:
+        msg: "{{ resp.msg }}"
+      when: resp.failed
+
+    - name: host downtimes
+      debug:
+        msg: "{{ resp.json| json_query('value[].extensions') }}"
+      when: not resp.failed
