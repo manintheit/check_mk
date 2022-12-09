@@ -9,3 +9,5 @@ Both are tested on check_mk version `2.0.0p31 (CFE)`
 * jq 1.6
 
 ```Note:``` Do not forget to set ```cmk_base_api_addr``` accordingly.
+
+
